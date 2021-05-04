@@ -1,19 +1,21 @@
-import logo from './logo.svg';
 import './App.css';
 import axios from 'axios'
 import React, { useState,useReducer } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import InfiniteScroll from 'react-infinite-scroll-component';
+import Lightbox from 'react-image-lightbox';
+import 'react-image-lightbox/style.css'; // This only needs to be imported once in your app
 
 const MTA_HOME = "https://community.multitheftauto.com/"
 function App() {
   
-  const [total, setTotal] = useState(0);
-  const [resources, setRes] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [ignored, forceUpdate] = useReducer(x => x + 1, 0);
-  const [more, setHasMore] = useState(0);
-  const [loadedPage, setLoadedPage] = useState(1);
+  let [total, setTotal] = useState(0);
+  let [resources, setRes] = useState([]);
+  let [searchTerm, setSearchTerm] = useState("");
+  let [ignored, forceUpdate] = useReducer(x => x + 1, 0);
+  let [more, setHasMore] = useState(0);
+  let [loadedPage, setLoadedPage] = useState(1);
+
 
   
   function renderResult() {
@@ -33,11 +35,12 @@ function App() {
     return total/20 > Math.floor(total/20) ? Math.floor(total/20) + 1 : Math.floor(total/20)
   }
   function fetchMore() {
+    console.log("Fetch more requested")
     if (loadedPage < calcMaxPage(total)) {
       setTimeout(() => {
-        setHasMore(1)
         setLoadedPage(loadedPage+1)
         searchResrouces(loadedPage+1)
+        console.log("Fetching More request")
       }, 500);
 
       
@@ -49,9 +52,8 @@ function App() {
   }
   async function searchResrouces(page = 1){
 
-  
-    
-    let data = resources
+    let lastLength = resources.length
+    let data = [...resources]
     let query = `http://127.0.0.1:5000/search?key=${searchTerm}&page=${page}`
     console.log(query)
     await axios.get(query).then(e=>{
@@ -68,17 +70,14 @@ function App() {
       }
       setRes(data)
       setTotal(e.data.total)
-
-      setHasMore(loadedPage < calcMaxPage(e.data.total) ? 1 : 0)
-      console.log(`Set has more = ${loadedPage < calcMaxPage(e.data.total)}`)
+      setHasMore(loadedPage <= calcMaxPage(e.data.total) ? 1 : 0)
+      console.log(`Set has more = ${loadedPage <= calcMaxPage(e.data.total)}`)
 
     })
     
-    
-
-
+    /*
     console.log("Resrouce fetched, try to fetch img...")
-    for(let i=0;i< data.length;i++) {
+    for(let i=lastLength;i< data.length;i++) {
       await fetchImages(data[i].id).then(res =>{
         if (res.data.length > 0) {
           data[i].img = <img src={MTA_HOME+res.data[0].url}/>
@@ -88,10 +87,11 @@ function App() {
         }
       })
       setRes(data)
-      forceUpdate()
+      //forceUpdate()
 
       console.log(data)
     }
+    */
     console.log("All done!")
   }
 
@@ -104,14 +104,15 @@ function App() {
       }}/>
       <button onClick={()=>{
         setRes([])
+        setLoadedPage(1)
         searchResrouces(1)
         }}>Search!</button>
-      <p>Total {total}</p>
-      <p>HasMore: {more}</p>
+      <p>Total {total} resources.</p>
+      <p>Loaded {resources.length} resources.</p>
       <div className="container">
-        <InfiniteScroll  dataLength={total} loader={<h4>Loading...</h4>}
-          next={fetchMore}
-          hasMore={more == 1 ? true : false}
+        <InfiniteScroll  dataLength={resources.length} loader={<h4>Loading...</h4>}
+          next={()=>{fetchMore()}}
+          hasMore={more === 1 ? true : false}
           endMessage={<p>No More!</p>}
         >
         <table className="table mt-3">
