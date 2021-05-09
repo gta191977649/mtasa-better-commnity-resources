@@ -52,7 +52,7 @@ function App() {
   }
   async function searchResrouces(page = 1){
 
-    let lastLength = resources.length
+    
     let data = [...resources]
     let query = `http://127.0.0.1:5000/search?key=${searchTerm}&page=${page}`
     console.log(query)
@@ -65,7 +65,16 @@ function App() {
           des:e.data.data[i].des,
           type:e.data.data[i].type,
           id:e.data.data[i].id,
-          img:"fetch image...",
+          img: "Loading"
+        })
+        fetchImages(e.data.data[i].id).then(res=>{
+          if (res.data.length > 0) {
+            data[i].img = <img src={MTA_HOME+res.data[0].url}/>
+            console.log(data[i].img)
+            console.log(data)
+          }else{
+            data[i].img = <p>No IMG!</p>
+          }
         })
       }
       setRes(data)
@@ -75,21 +84,22 @@ function App() {
 
     })
     
+    
     /*
     console.log("Resrouce fetched, try to fetch img...")
-    for(let i=lastLength;i< data.length;i++) {
+    for(let i=loadedPage *20;i< resources.length;i++) {
       await fetchImages(data[i].id).then(res =>{
         if (res.data.length > 0) {
           data[i].img = <img src={MTA_HOME+res.data[0].url}/>
           console.log(data[i].img)
+          setRes(data)
+          console.log(data)
+         
         }else{
           data[i].img = <p>No IMG!</p>
         }
       })
-      setRes(data)
-      //forceUpdate()
-
-      console.log(data)
+      
     }
     */
     console.log("All done!")
